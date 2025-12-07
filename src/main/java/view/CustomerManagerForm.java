@@ -162,10 +162,5 @@ public class CustomerManagerForm extends JFrame {
         selectedId = -1;
     }
 
-    // Main method removed/commented because this form is now opened by CustomerForm
-    /*
-    public static void main(String[] args) {
-        new CustomerManagerForm().setVisible(true);
-    }
-    */
+
 }

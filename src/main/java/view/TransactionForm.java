@@ -1,175 +1,135 @@
 package view;
 
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
+import java.time.LocalDate;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.time.LocalDate;
-import javax.swing.JOptionPane;
 import model.Account;
 import model.ETransactionStatus;
 import model.ETransactionType;
 import model.Transaction;
 import service.BankService;
 
-public class TransactionForm extends javax.swing.JFrame {
+public class TransactionForm extends JFrame {
 
     private BankService service;
     private Account selectedAccount = null;
 
+    private JTextField txtSearchAcc, txtAmount;
+    private JLabel lblAccountInfo;
+    private JComboBox<String> cmbType;
+    private JButton btnSearch, btnSave, btnViewAll;
+
     public TransactionForm() {
+        setupConnection();
         initComponents();
-        connectToServer();
         populateTypes();
     }
 
-    private void connectToServer() {
+    private void setupConnection() {
         try {
             Registry registry = LocateRegistry.getRegistry("localhost", 1100);
             service = (BankService) registry.lookup("BankingService");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Connection Error: " + e.getMessage());
-        }
+        } catch (Exception e) { }
+    }
+
+    private void initComponents() {
+        setTitle("New Transaction");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(900, 600);
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
+
+        JPanel mainWrapper = new JPanel(new GridBagLayout());
+        JPanel contentPanel = new JPanel(new GridLayout(0, 2, 15, 15));
+        contentPanel.setBorder(new TitledBorder("Transaction Details"));
+        contentPanel.setPreferredSize(new Dimension(500, 250));
+
+        txtSearchAcc = new JTextField();
+        btnSearch = new JButton("Find");
+        btnSearch.addActionListener(e -> searchAccount());
+
+        JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
+        searchPanel.add(txtSearchAcc, BorderLayout.CENTER);
+        searchPanel.add(btnSearch, BorderLayout.EAST);
+
+        lblAccountInfo = new JLabel("Balance: ---");
+        lblAccountInfo.setForeground(new Color(0, 100, 0));
+        lblAccountInfo.setFont(new Font("Segoe UI", Font.BOLD, 14));
+
+        txtAmount = new JTextField();
+        cmbType = new JComboBox<>();
+
+        contentPanel.add(new JLabel("Account No:"));
+        contentPanel.add(searchPanel);
+
+        contentPanel.add(new JLabel(""));
+        contentPanel.add(lblAccountInfo);
+
+        contentPanel.add(new JLabel("Amount:"));
+        contentPanel.add(txtAmount);
+
+        contentPanel.add(new JLabel("Type:"));
+        contentPanel.add(cmbType);
+
+        mainWrapper.add(contentPanel);
+        add(mainWrapper, BorderLayout.CENTER);
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        btnSave = new JButton("Process Transaction");
+        btnSave.setPreferredSize(new Dimension(170, 45));
+
+        btnViewAll = new JButton("History Log");
+        btnViewAll.setPreferredSize(new Dimension(170, 45));
+
+        btnSave.addActionListener(e -> saveTransaction());
+        btnViewAll.addActionListener(e -> new TransactionManagerForm().setVisible(true));
+
+        btnPanel.add(btnSave);
+        btnPanel.add(btnViewAll);
+
+        add(btnPanel, BorderLayout.SOUTH);
     }
 
     private void populateTypes() {
         cmbType.removeAllItems();
-        for (ETransactionType type : ETransactionType.values()) {
-            cmbType.addItem(type.toString());
-        }
+        for (ETransactionType t : ETransactionType.values()) cmbType.addItem(t.toString());
     }
 
-    private void searchAccountButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    private void searchAccount() {
         try {
-            if (txtSearchAcc.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Enter Account Number first!");
-                return;
-            }
-
-            String accId = txtSearchAcc.getText();
-            selectedAccount = service.findAccountById(accId);
-
+            if (txtSearchAcc.getText().isEmpty()) return;
+            selectedAccount = service.findAccountById(txtSearchAcc.getText());
             if (selectedAccount != null) {
-                // ✅ FIX: Get the first customer from the Set (since getCustomer() was removed)
-                String owner = "Unknown";
-                if (selectedAccount.getCustomers() != null && !selectedAccount.getCustomers().isEmpty()) {
-                    owner = selectedAccount.getCustomers().iterator().next().getFirstName();
-                }
-
-                lblAccountInfo.setText("Owner: " + owner + " | Balance: $" + selectedAccount.getBalance());
-                JOptionPane.showMessageDialog(this, "Account Found!");
+                lblAccountInfo.setText("Current Balance: $" + selectedAccount.getBalance());
             } else {
-                lblAccountInfo.setText("Account Not Found");
-                JOptionPane.showMessageDialog(this, "Account ID not found.");
+                lblAccountInfo.setText("Not Found");
                 selectedAccount = null;
             }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-        }
+        } catch (Exception e) { JOptionPane.showMessageDialog(this, "Error: " + e.getMessage()); }
     }
 
-    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    private void saveTransaction() {
         try {
-            if (selectedAccount == null) {
-                JOptionPane.showMessageDialog(this, "Please search for an Account first!");
-                return;
-            }
+            if (selectedAccount == null) { JOptionPane.showMessageDialog(this, "Find account first"); return; }
 
             Transaction t = new Transaction();
             t.setAmount(Double.parseDouble(txtAmount.getText()));
             t.setTransactionDate(LocalDate.now());
-
             t.setType(ETransactionType.valueOf(cmbType.getSelectedItem().toString()));
             t.setStatus(ETransactionStatus.SUCCESSFUL);
-
             t.setAccount(selectedAccount);
 
             service.createTransaction(t);
-
-            JOptionPane.showMessageDialog(this, "Transaction Processed Successfully!");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
-            e.printStackTrace();
-        }
+            JOptionPane.showMessageDialog(this, "Success!");
+            txtAmount.setText("");
+        } catch (Exception e) { JOptionPane.showMessageDialog(this, "Error: " + e.getMessage()); }
     }
 
-    // --- GUI Setup ---
-    @SuppressWarnings("unchecked")
-    private void initComponents() {
-
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        txtSearchAcc = new javax.swing.JTextField();
-        btnSearch = new javax.swing.JButton();
-        lblAccountInfo = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        txtAmount = new javax.swing.JTextField();
-        jLabel4 = new javax.swing.JLabel();
-        cmbType = new javax.swing.JComboBox<>();
-        btnSave = new javax.swing.JButton();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Transaction Entry");
-
-        jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 18));
-        jLabel1.setText("New Transaction");
-
-        jLabel2.setText("Account No:");
-        btnSearch.setText("Search");
-        btnSearch.addActionListener(evt -> searchAccountButtonActionPerformed(evt));
-
-        lblAccountInfo.setForeground(new java.awt.Color(0, 102, 0));
-        lblAccountInfo.setText("Current Balance: ---");
-
-        jLabel3.setText("Amount:");
-        jLabel4.setText("Type:");
-
-        btnSave.setText("Process Transaction");
-        btnSave.addActionListener(evt -> saveButtonActionPerformed(evt));
-
-        // Layout Code
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup().addGap(30)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel1)
-                                .addComponent(lblAccountInfo)
-                                .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(jLabel2).addComponent(jLabel3).addComponent(jLabel4))
-                                        .addGap(18)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                                .addGroup(layout.createSequentialGroup().addComponent(txtSearchAcc, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(btnSearch))
-                                                .addComponent(txtAmount).addComponent(cmbType, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                                .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 240, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(40, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup().addGap(20)
-                        .addComponent(jLabel1).addGap(20)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(jLabel2).addComponent(txtSearchAcc).addComponent(btnSearch))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblAccountInfo).addGap(18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(jLabel3).addComponent(txtAmount))
-                        .addGap(10)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE).addComponent(jLabel4).addComponent(cmbType))
-                        .addGap(20)
-                        .addComponent(btnSave, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(30, Short.MAX_VALUE))
-        );
-        pack();
+    public static void main(String[] args) {
+        try { for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) if ("Nimbus".equals(info.getName())) UIManager.setLookAndFeel(info.getClassName()); } catch (Exception e) {}
+        SwingUtilities.invokeLater(() -> new TransactionForm().setVisible(true));
     }
-
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(() -> new TransactionForm().setVisible(true));
-    }
-
-    private javax.swing.JButton btnSave;
-    private javax.swing.JButton btnSearch;
-    private javax.swing.JComboBox<String> cmbType;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel lblAccountInfo;
-    private javax.swing.JTextField txtAmount;
-    private javax.swing.JTextField txtSearchAcc;
 }
