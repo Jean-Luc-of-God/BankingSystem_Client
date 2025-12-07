@@ -1,7 +1,7 @@
 package view;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -37,11 +37,15 @@ public class LoanForm extends JFrame {
     private void initComponents() {
         setTitle("Apply for Loan");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(900, 600); // Fixed size
+        setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Center Form
-        JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10));
-        formPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        // --- WRAPPER (Prevents stretching) ---
+        JPanel mainWrapper = new JPanel(new GridBagLayout());
+        JPanel contentPanel = new JPanel(new GridLayout(0, 2, 15, 15));
+        contentPanel.setBorder(new TitledBorder("Loan Application"));
+        contentPanel.setPreferredSize(new Dimension(500, 300));
 
         txtSearchAcc = new JTextField();
         btnSearch = new JButton("Search");
@@ -53,32 +57,33 @@ public class LoanForm extends JFrame {
 
         lblAccountInfo = new JLabel("Owner: (None)");
         lblAccountInfo.setForeground(new Color(0, 100, 0));
-        lblAccountInfo.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblAccountInfo.setFont(new Font("Segoe UI", Font.BOLD, 14));
 
         txtAmount = new JTextField();
         txtDuration = new JTextField();
 
-        formPanel.add(new JLabel("Account No:"));
-        formPanel.add(searchPanel);
+        contentPanel.add(new JLabel("Account No:"));
+        contentPanel.add(searchPanel);
 
-        formPanel.add(new JLabel(""));
-        formPanel.add(lblAccountInfo);
+        contentPanel.add(new JLabel(""));
+        contentPanel.add(lblAccountInfo);
 
-        formPanel.add(new JLabel("Loan Amount:"));
-        formPanel.add(txtAmount);
+        contentPanel.add(new JLabel("Loan Amount:"));
+        contentPanel.add(txtAmount);
 
-        formPanel.add(new JLabel("Duration (Months):"));
-        formPanel.add(txtDuration);
+        contentPanel.add(new JLabel("Duration (Months):"));
+        contentPanel.add(txtDuration);
 
-        add(formPanel, BorderLayout.CENTER);
+        mainWrapper.add(contentPanel);
+        add(mainWrapper, BorderLayout.CENTER);
 
-        // Buttons
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        // --- BUTTONS ---
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
         btnSave = new JButton("Submit Application");
-        btnSave.setPreferredSize(new Dimension(150, 35));
+        btnSave.setPreferredSize(new Dimension(160, 45));
 
         btnViewAll = new JButton("Manage Loans");
-        btnViewAll.setPreferredSize(new Dimension(150, 35));
+        btnViewAll.setPreferredSize(new Dimension(160, 45));
 
         btnSave.addActionListener(e -> saveLoan());
         btnViewAll.addActionListener(e -> new LoanManagerForm().setVisible(true));
@@ -87,9 +92,6 @@ public class LoanForm extends JFrame {
         btnPanel.add(btnViewAll);
 
         add(btnPanel, BorderLayout.SOUTH);
-
-        pack();
-        setLocationRelativeTo(null);
     }
 
     private void searchAccount() {
@@ -116,7 +118,7 @@ public class LoanForm extends JFrame {
             Loan l = new Loan();
             double amt = Double.parseDouble(txtAmount.getText());
             l.setAmountToReceive(amt);
-            l.setAmountToPay(amt * 1.15);
+            l.setAmountToPay(amt * 1.15); // 15% Interest
             l.setInterestRate(0.15);
             l.setMonthlyDeduction(amt / 12);
 
@@ -133,6 +135,8 @@ public class LoanForm extends JFrame {
 
             service.createLoan(l);
             JOptionPane.showMessageDialog(this, "Loan Submitted!");
+            txtAmount.setText("");
+            txtDuration.setText("");
         } catch (Exception e) { JOptionPane.showMessageDialog(this, "Error: " + e.getMessage()); }
     }
 

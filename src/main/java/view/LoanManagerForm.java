@@ -40,12 +40,15 @@ public class LoanManagerForm extends JFrame {
     private void initComponents() {
         setTitle("Manage Loans");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setSize(900, 600);
+        setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // --- TOP: Table ---
+        // Table
         String[] columns = {"ID", "Amount", "Status", "Account"};
         model = new DefaultTableModel(columns, 0);
         table = new JTable(model);
+        table.setRowHeight(25);
 
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
@@ -59,39 +62,48 @@ public class LoanManagerForm extends JFrame {
             }
         });
 
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(table);
+        JPanel topPanel = new JPanel(new BorderLayout());
+        JLabel title = new JLabel("Loan Applications", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        title.setBorder(new EmptyBorder(10, 0, 10, 0));
+        topPanel.add(title, BorderLayout.NORTH);
+        topPanel.add(scrollPane, BorderLayout.CENTER);
+        add(topPanel, BorderLayout.CENTER);
 
-        // --- BOTTOM: Editors ---
+        // Editors
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        JPanel formPanel = new JPanel(new GridLayout(2, 3, 10, 10));
-        formPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JPanel formPanel = new JPanel(new GridLayout(2, 3, 15, 15));
+        formPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         txtId = new JTextField(); txtId.setEditable(false);
         txtAmount = new JTextField();
         cmbStatus = new JComboBox<>();
         for (ELoanStatus s : ELoanStatus.values()) cmbStatus.addItem(s.toString());
 
-        formPanel.add(new JLabel("ID:")); formPanel.add(txtId);
+        formPanel.add(new JLabel("Loan ID:")); formPanel.add(txtId);
         formPanel.add(new JLabel("Amount:")); formPanel.add(txtAmount);
         formPanel.add(new JLabel("Status:")); formPanel.add(cmbStatus);
 
-        JPanel btnPanel = new JPanel(new FlowLayout());
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
         JButton btnUpdate = new JButton("Update");
         JButton btnDelete = new JButton("Delete");
         JButton btnRefresh = new JButton("Refresh");
+
+        btnUpdate.setPreferredSize(new Dimension(130, 40));
+        btnDelete.setPreferredSize(new Dimension(130, 40));
+        btnDelete.setForeground(Color.RED);
+        btnRefresh.setPreferredSize(new Dimension(130, 40));
 
         btnUpdate.addActionListener(e -> updateLoan());
         btnDelete.addActionListener(e -> deleteLoan());
         btnRefresh.addActionListener(e -> loadData());
 
         btnPanel.add(btnUpdate); btnPanel.add(btnDelete); btnPanel.add(btnRefresh);
-
         bottomPanel.add(formPanel, BorderLayout.CENTER);
         bottomPanel.add(btnPanel, BorderLayout.SOUTH);
 
         add(bottomPanel, BorderLayout.SOUTH);
-        pack();
-        setLocationRelativeTo(null);
     }
 
     private void loadData() {
