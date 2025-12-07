@@ -40,12 +40,16 @@ public class AccountManagerForm extends JFrame {
     private void initComponents() {
         setTitle("Manage Accounts");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setSize(1000, 700); // Fixed Startup Size
+        setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
         // --- TOP: Table ---
         String[] columns = {"Acc No", "Owner", "Balance", "Type", "Active"};
         model = new DefaultTableModel(columns, 0);
         table = new JTable(model);
+        table.setRowHeight(25); // Make rows easier to read
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
         table.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
@@ -61,29 +65,41 @@ public class AccountManagerForm extends JFrame {
         });
 
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setPreferredSize(new Dimension(600, 250));
-        add(scrollPane, BorderLayout.CENTER);
+        // Add a title above table
+        JPanel topPanel = new JPanel(new BorderLayout());
+        JLabel title = new JLabel("Account Registry", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        title.setBorder(new EmptyBorder(10, 0, 10, 0));
+        topPanel.add(title, BorderLayout.NORTH);
+        topPanel.add(scrollPane, BorderLayout.CENTER);
+
+        add(topPanel, BorderLayout.CENTER);
 
         // --- BOTTOM: Editors ---
         JPanel bottomPanel = new JPanel(new BorderLayout());
-        JPanel fieldsPanel = new JPanel(new GridLayout(2, 4, 10, 10));
-        fieldsPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        JPanel fieldsPanel = new JPanel(new GridLayout(2, 4, 15, 15)); // Good spacing
+        fieldsPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         txtAccNum = new JTextField(); txtAccNum.setEditable(false);
         txtBalance = new JTextField();
         cmbType = new JComboBox<>();
         for (EAccountType t : EAccountType.values()) cmbType.addItem(t.toString());
-        chkActive = new JCheckBox("Active");
+        chkActive = new JCheckBox("Active Account");
 
-        fieldsPanel.add(new JLabel("Acc No:")); fieldsPanel.add(txtAccNum);
+        fieldsPanel.add(new JLabel("Acc No (Locked):")); fieldsPanel.add(txtAccNum);
         fieldsPanel.add(new JLabel("Balance:")); fieldsPanel.add(txtBalance);
         fieldsPanel.add(new JLabel("Type:")); fieldsPanel.add(cmbType);
         fieldsPanel.add(new JLabel("Status:")); fieldsPanel.add(chkActive);
 
-        JPanel btnPanel = new JPanel(new FlowLayout());
-        JButton btnUpdate = new JButton("Update");
-        JButton btnDelete = new JButton("Delete");
-        JButton btnRefresh = new JButton("Refresh");
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 20));
+        JButton btnUpdate = new JButton("Update Account");
+        JButton btnDelete = new JButton("Delete Account");
+        JButton btnRefresh = new JButton("Refresh List");
+
+        btnUpdate.setPreferredSize(new Dimension(140, 40));
+        btnDelete.setPreferredSize(new Dimension(140, 40));
+        btnDelete.setForeground(Color.RED);
+        btnRefresh.setPreferredSize(new Dimension(140, 40));
 
         btnUpdate.addActionListener(e -> updateAccount());
         btnDelete.addActionListener(e -> deleteAccount());
@@ -95,8 +111,6 @@ public class AccountManagerForm extends JFrame {
         bottomPanel.add(btnPanel, BorderLayout.SOUTH);
 
         add(bottomPanel, BorderLayout.SOUTH);
-        pack();
-        setLocationRelativeTo(null);
     }
 
     private void loadData() {
